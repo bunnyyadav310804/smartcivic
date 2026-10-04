@@ -37,6 +37,22 @@ npm run dev
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:5000`
 
+## Vercel deployment setup
+
+This project is prepared for Vercel using GitHub.
+
+1. Push the repo to GitHub.
+2. Import the repo into Vercel.
+3. Add the following environment variables in the Vercel project settings:
+
+```bash
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/smartcivic
+VITE_API_URL=/api
+```
+
+4. Keep the project root as the repository root.
+5. Vercel will serve the Vite frontend and route `/api/*` to the Express API function.
+
 ## API
 
 - `GET /api/health`
