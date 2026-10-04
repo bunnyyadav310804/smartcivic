@@ -11,5 +11,6 @@ client/!.env.example
 server/node_modules
 server/.env
 server/.env.*
+!server/.env.example
 server/!.env.example
 npm-debug.log*
