@@ -1,5 +1,6 @@
 const AUTH_TOKEN_KEY = 'smart-civic-auth-token'
 const AUTH_USER_KEY = 'smart-civic-auth-user'
+const AUTH_REQUEST_TIMEOUT_MS = 20000
 
 function getApiBaseUrl() {
   return import.meta.env.VITE_API_URL || '/api'
@@ -13,19 +14,37 @@ function getHeaders(token) {
 }
 
 async function requestAuth(path, payload, token) {
-  const response = await fetch(`${getApiBaseUrl()}/auth/${path}`, {
-    method: 'POST',
-    headers: getHeaders(token),
-    body: JSON.stringify(payload)
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), AUTH_REQUEST_TIMEOUT_MS)
 
-  const data = await response.json()
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/auth/${path}`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    })
 
-  if (!response.ok) {
-    throw new Error(data.message || 'Authentication request failed')
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      throw new Error(data.message || `Authentication request failed (${response.status})`)
+    }
+
+    return data
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('The server did not respond in time. Check the Vercel function logs and database settings, then try again.')
+    }
+
+    if (error instanceof TypeError) {
+      throw new Error('Could not reach the API. Check the Vercel deployment and /api route.')
+    }
+
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
   }
-
-  return data
 }
 
 export async function registerRequest(payload) {
