@@ -37,6 +37,18 @@ npm run dev
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:5000`
 
+## Deploy to Render as one web service
+
+The Express server serves the built React app, APIs, and uploads from the same Render URL.
+
+1. Push the repository to GitHub and create a **Web Service** in Render for that repository. Leave **Root Directory** empty.
+2. Use `npm ci && npm run build` as the build command and `npm start` as the start command. Set the health check path to `/api/health`.
+3. Add `NODE_ENV=production`, `MONGODB_URI`, `JWT_SECRET`, `DEFAULT_ADMIN_EMAIL`, and `DEFAULT_ADMIN_PASSWORD` in the Render service's environment settings. `VITE_API_URL=/api` is optional; same-origin `/api` is the default. Keep secrets out of GitHub.
+4. In MongoDB Atlas, allow network access from Render. Render outbound addresses can change, so Atlas may need `0.0.0.0/0` for a basic setup. Use a strong database password and a database user limited to the app's database.
+5. Deploy, then check `/api/health` and open the Render service URL to test the app.
+
+Complaint images are stored in `server/uploads/complaints`. Render Free's filesystem is temporary, so uploaded images can disappear after a restart or redeploy.
+
 ## Vercel multi-service deployment
 
 This project is prepared for Vercel using GitHub.

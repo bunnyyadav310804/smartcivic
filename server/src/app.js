@@ -13,6 +13,8 @@ import { seedDefaultAdmin } from './config/seedAdmin.js'
 const app = express()
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+const projectRoot = path.resolve(__dirname, '../..')
+const clientDistPath = path.join(projectRoot, 'client', 'dist')
 const uploadsPath = path.resolve(__dirname, '../uploads/complaints')
 let runtimeInitialization
 
@@ -40,7 +42,7 @@ app.use(
 app.use(express.json())
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')))
 
-app.use(async (_request, response, next) => {
+app.use('/api', async (_request, response, next) => {
   try {
     await ensureRuntimeInitialized()
     next()
@@ -50,13 +52,25 @@ app.use(async (_request, response, next) => {
   }
 })
 
-app.get('/', (_request, response) => {
-  response.json({ message: 'Express server is running' })
-})
-
 app.use('/api', healthRouter)
 app.use('/api', apiRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/complaints', complaintRouter)
+
+app.use(express.static(clientDistPath))
+
+app.get('/', (_request, response) => {
+  response.json({ message: 'Express server is running' })
+})
+
+app.get('*', (request, response, next) => {
+  if (/^\/(api|uploads)(\/|$)/.test(request.path)) {
+    return next()
+  }
+
+  response.sendFile(path.join(clientDistPath, 'index.html'), (error) => {
+    if (error) next(error)
+  })
+})
 
 export default app
